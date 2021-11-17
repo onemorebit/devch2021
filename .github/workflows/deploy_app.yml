@@ -40,10 +40,18 @@ jobs:
           sam build
           sam deploy
 
-      - name: do callback with runs url
-        if: ${{ always() }}
+      - name: do callback with fail
+        if: ${{ failure() }}
         run: |
           export URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          curl -vi ${{ github.event.inputs.callbackUrl }} \
-               -d "Build ${{ github.event.workflow_run.conclusion }} $URL" \
+          curl -fi ${{ github.event.inputs.callbackUrl }} \
+               -d "Result: [fail]($URL)" \
+               -H "x-tg-chat-id: ${{ github.event.inputs.chatId }}"
+
+      - name: do callback with success
+        if: ${{ success() }}
+        run: |
+          export URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          curl -fi ${{ github.event.inputs.callbackUrl }} \
+               -d "Result: [success]($URL)" \
                -H "x-tg-chat-id: ${{ github.event.inputs.chatId }}"

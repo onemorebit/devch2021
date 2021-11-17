@@ -1,4 +1,9 @@
 # devch2021
+
+Try to deploy hallo-word lambda with git actions [here](https://t.me/devch2021_bot).
+
+Fork me on [github](https://github.com/onemorebit/devch2021).
+
 ## Schema
 
 ![](tg-bot-deploy.png)

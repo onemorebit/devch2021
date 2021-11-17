@@ -53,7 +53,7 @@ func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResp
 		return
 	}
 
-	_, err = b.Send(&tb.Chat{ID: chatId}, req.Body)
+	_, err = b.Send(&tb.Chat{ID: chatId}, req.Body, &tb.SendOptions{ParseMode: tb.ModeMarkdownV2, DisableWebPagePreview: true})
 	if err != nil {
 		resp.Body = err.Error()
 	}
