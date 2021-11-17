@@ -19,9 +19,47 @@ Conditions:
     - ""
 
 Resources:
+  ManagedPolicyGithubOIDC:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      Description: Managed policy for GithubOIDC
+      ManagedPolicyName: GithubOIDC
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 'sts:GetCallerIdentity'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'iam:AttachRolePolicy'
+              - 'iam:CreateRole'
+              - 'iam:CreateServiceLinkedRole'
+              - 'iam:GetRole'
+            Resource:
+              - 'arn:aws:iam:::role/HelloWorldFunctionRole'
+              - 'arn:aws:iam:::role/TGWebhookFunctionRole'
+              - 'arn:aws:iam:::role/CallbackCurlFunctionRo'
+          - Effect: Allow
+            Action:
+              - 'lambda:AddPermission'
+              - 'lambda:CreateFunction'
+              - 'lambda:GetFunction'
+              - 'lambda:GetFunctionCodeSigningConfig'
+              - 'lambda:ListTags'
+              - 'lambda:UpdateFunctionCode'
+              - 'lambda:UpdateFunctionConfiguration'
+            Resource:
+              - 'arn:aws:lambda:*::function:HelloWorldFunction'
+              - 'arn:aws:lambda:*::function:TGWebhookFunction'
+              - 'arn:aws:lambda:*::function:CallbackCurlFunction'
+
   Role:
     Type: AWS::IAM::Role
     Properties:
+      Path: /
+      ManagedPolicyArns:
+        - Ref: ManagedPolicyGithubOIDC
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
