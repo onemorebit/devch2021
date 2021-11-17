@@ -7,7 +7,7 @@ Globals:
     Timeout: 15
 
 Resources:
-  TGWebhookFunction:
+  DEVCH2021TGWebhookFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda-tg-webhook/
@@ -24,7 +24,7 @@ Resources:
             Method: POST
     Metadata:
       BuildMethod: makefile
-  CallbackCurlFunction:
+  DEVCH2021CallbackCurlFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda-callback-curl/

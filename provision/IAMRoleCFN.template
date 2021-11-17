@@ -8,6 +8,8 @@ Parameters:
     Type: String
   RepositoryName:
     Type: String
+  S3BucketName:
+    Type: String
   OIDCProviderArn:
     Description: Arn for the GitHub OIDC Provider.
     Default: ""
@@ -19,6 +21,12 @@ Conditions:
     - ""
 
 Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref S3BucketName
+
   ManagedPolicyGithubOIDC:
     Type: "AWS::IAM::ManagedPolicy"
     Properties:
@@ -28,6 +36,18 @@ Resources:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
+            Action:
+              - "s3:PutObject"
+              - "s3:PutObjectAcl"
+              - "s3:GetObject"
+              - "s3:DeleteObject"
+              - "s3:PutObjectVersionAcl"
+            Resource: !Sub 'arn:aws:s3:::${S3BucketName}/*'
+          - Effect: Allow
+            Action:
+              - "s3:ListBucket"
+            Resource: !Sub 'arn:aws:s3:::${S3BucketName}'
+          - Effect: Allow
             Action: 'sts:GetCallerIdentity'
             Resource: '*'
           - Effect: Allow
@@ -36,10 +56,7 @@ Resources:
               - 'iam:CreateRole'
               - 'iam:CreateServiceLinkedRole'
               - 'iam:GetRole'
-            Resource:
-              - 'arn:aws:iam:::role/HelloWorldFunctionRole'
-              - 'arn:aws:iam:::role/TGWebhookFunctionRole'
-              - 'arn:aws:iam:::role/CallbackCurlFunctionRo'
+            Resource: 'arn:aws:iam:::role/DEVCH2021*'
           - Effect: Allow
             Action:
               - 'lambda:AddPermission'
@@ -49,10 +66,7 @@ Resources:
               - 'lambda:ListTags'
               - 'lambda:UpdateFunctionCode'
               - 'lambda:UpdateFunctionConfiguration'
-            Resource:
-              - 'arn:aws:lambda:*::function:HelloWorldFunction'
-              - 'arn:aws:lambda:*::function:TGWebhookFunction'
-              - 'arn:aws:lambda:*::function:CallbackCurlFunction'
+            Resource: 'arn:aws:lambda:*::function:DEVCH2021*'
 
   Role:
     Type: AWS::IAM::Role

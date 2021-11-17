@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "devch2021-app"
-s3_bucket = "samclisourcebucket-us-east-1"
+s3_bucket = "devch2021-samclisourcebucket"
 s3_prefix = "devch2021-app"
 region = "us-east-1"
 confirm_changeset = false
