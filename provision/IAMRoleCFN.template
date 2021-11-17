@@ -26,6 +26,11 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref S3BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   ManagedPolicyGithubOIDC:
     Type: "AWS::IAM::ManagedPolicy"
@@ -48,6 +53,16 @@ Resources:
               - "s3:ListBucket"
             Resource: !Sub 'arn:aws:s3:::${S3BucketName}'
           - Effect: Allow
+            Action:
+              - "apigateway:GET"
+              - "apigateway:PATCH"
+              - "apigateway:POST"
+              - "apigateway:PUT"
+              - "apigateway:UpdateRestApiPolicy"
+            Resource:
+              - "arn:aws:apigateway:*::/restapis"
+              - "arn:aws:apigateway:*::/restapis/*"
+          - Effect: Allow
             Action: 'sts:GetCallerIdentity'
             Resource: '*'
           - Effect: Allow
@@ -55,18 +70,27 @@ Resources:
               - 'iam:AttachRolePolicy'
               - 'iam:CreateRole'
               - 'iam:CreateServiceLinkedRole'
+              - 'iam:DetachRolePolicy'
+              - 'iam:DeleteRole'
               - 'iam:GetRole'
-            Resource: 'arn:aws:iam:::role/DEVCH2021*'
+              - 'iam:PassRole'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/devch2021-*'
           - Effect: Allow
             Action:
               - 'lambda:AddPermission'
               - 'lambda:CreateFunction'
+              - 'lambda:DeleteFunction'
               - 'lambda:GetFunction'
               - 'lambda:GetFunctionCodeSigningConfig'
               - 'lambda:ListTags'
+              - 'lambda:RemovePermission'
               - 'lambda:UpdateFunctionCode'
               - 'lambda:UpdateFunctionConfiguration'
-            Resource: 'arn:aws:lambda:*::function:DEVCH2021*'
+            Resource: !Sub 'arn:aws:lambda:*:${AWS::AccountId}:function:devch2021-*'
+          - Effect: Allow
+            Action:
+              - 'cloudformation:*'
+            Resource: '*'
 
   Role:
     Type: AWS::IAM::Role

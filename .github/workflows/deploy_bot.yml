@@ -1,4 +1,4 @@
-name: release bot
+name: deploy bot
 on:
   push:
     branches:
