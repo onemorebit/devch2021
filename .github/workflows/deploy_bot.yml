@@ -1,0 +1,36 @@
+name: release bot
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: check env
+        run: |
+          command -v aws && aws --version
+          command -v sam && sam --version
+          command -v go && go version
+          command -v python && python --version
+          command -v make && make -v
+          env
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: devch2021
+
+      - name: deploy bot
+        env:
+          DEPLOY_URL: "https://:${{ secrets.WF_DISPATCH_KEY }}@api.github.com/repos/${{ github.repository }}/actions/workflows/deploy_app.yml/dispatches"
+          TELEBOT_SECRET: ${{ secrets.TELEBOT_SECRET }}
+        run: |
+          cd bot
+          make deploy

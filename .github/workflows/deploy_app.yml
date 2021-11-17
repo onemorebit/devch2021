@@ -1,0 +1,49 @@
+name: build app
+on:
+  workflow_dispatch:
+    inputs:
+      callbackUrl:
+        required: false
+        default: ''
+      chatId:
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: check env
+        run: |
+          command -v aws && aws --version
+          command -v sam && sam --version
+          command -v go && go version
+          command -v python && python --version
+          env
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: devch2021
+
+      - name: deploy app
+        env:
+          TELEBOT_SECRET: ${{ secrets.TELEBOT_SECRET }}
+        run: |
+          cd app
+          sam build
+          sam deploy
+
+      - name: do callback with runs url
+        if: ${{ always() }}
+        run: |
+          export URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          curl -vi ${{ github.event.inputs.callbackUrl }} \
+               -d "Build ${{ github.event.workflow_run.conclusion }} $URL" \
+               -H "x-tg-chat-id: ${{ github.event.inputs.chatId }}"

@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for bot
+
+Globals:
+  Function:
+    Timeout: 15
+
+Resources:
+  TGWebhookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda-tg-webhook/
+      Handler: main
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /tg-webhook
+            Method: POST
+    Metadata:
+      BuildMethod: makefile
+  CallbackCurlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda-callback-curl/
+      Handler: main
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /callback-curl
+            Method: POST
+    Metadata:
+      BuildMethod: makefile
+
+Outputs:
+  BotBaseUrl:
+    Description: "Base URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

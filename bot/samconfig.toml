@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "devch2021-bot"
+s3_bucket = "samclisourcebucket-us-east-1"
+s3_prefix = "devch2021-bot"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
