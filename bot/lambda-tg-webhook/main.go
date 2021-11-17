@@ -90,6 +90,7 @@ func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResp
 		}
 	})
 	b.Handle(tb.OnText, func(m *tb.Message) { b.Send(m.Chat, DefaultText) })
+	b.Handle(tb.OnUserJoined, func(m *tb.Message) { b.Send(m.Chat, DefaultText) })
 	println("processing message: " + strconv.Itoa(u.Message.ID))
 	b.ProcessUpdate(u)
 	return
