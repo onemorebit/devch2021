@@ -101,7 +101,7 @@ func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResp
 
 		}
 	})
-	b.Handle(TbCmdOnVmCreate, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmCreate+" is not implemented yet") })
+	b.Handle(TbCmdOnVmCreate, func(m *tb.Message) { tgCreateVM(b, m) })
 	b.Handle(TbCmdOnVmShowVer, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmShowVer+" is not implemented yet") })
 	b.Handle(TbCmdOnVmKdePatch, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmKdePatch+" is not implemented yet") })
 	b.Handle(TbCmdOnVmCDestroy, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmCDestroy+" is not implemented yet") })
