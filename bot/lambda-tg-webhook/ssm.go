@@ -26,18 +26,20 @@ func SSMRunCommand(shellCmds []string) string {
 	if err != nil {
 		return "Send command err: " + err.Error()
 	}
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	cmdInvocation, err := ssmSes.GetCommandInvocation(&ssm.GetCommandInvocationInput{
 		CommandId:  sendCmd.Command.CommandId,
 		InstanceId: aws.String(vmid),
 	})
-	if err != nil {
+
+	switch {
+	case err != nil:
 		return fmt.Sprintf(
-			"GetCommandInvocation err:\n"+
-				"CommandId: %s; InstanceId: %s;\n\n%s",
+			"GetCommandInvocation err:\nCommandId: %s; InstanceId: %s;\n\n%s",
 			*sendCmd.Command.CommandId, vmid, err.Error())
+	case cmdInvocation != nil:
+		return fmt.Sprintf("Executed:\n```\n%v\n```\nResult:\n%s", strings.Join(shellCmds[:], "\n"), *cmdInvocation.StandardErrorContent+*cmdInvocation.StandardOutputContent)
 	}
-	//return "stderr:\n" + *cmdInvocation.StandardErrorContent + "\nstdout:\n" + *cmdInvocation.StandardOutputContent
-	return fmt.Sprintf("Executed:\n```\n%v\n```\nResult:\n%s", strings.Join(shellCmds[:], "\n"), *cmdInvocation.StandardErrorContent+*cmdInvocation.StandardOutputContent)
+	return "unexpected behavior"
 
 }

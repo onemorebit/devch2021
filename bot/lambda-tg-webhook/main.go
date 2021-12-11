@@ -22,7 +22,7 @@ var (
 	TbCmdOnVmCDestroy = "/vm_destroy"
 	TbCmdOnVmMonitor  = "/vm_monitor"
 	DefaultText       = "Supported commands:\n" +
-		TbCmdDeployApp + " deploy app\n" +
+		TbCmdDeployApp + " deploy app (online round)\n" +
 		TbCmdOnVmCreate + " create freebsd with the old KDE version\n" +
 		TbCmdOnVmShowVer + " show FreeBsd and KDE versions\n" +
 		TbCmdOnVmKdePatch + " patch KDE\n" +

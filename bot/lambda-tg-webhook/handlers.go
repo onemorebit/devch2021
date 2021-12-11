@@ -6,73 +6,53 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"gopkg.in/tucnak/telebot.v2"
+	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-// i will be happy to use SQS FIFO for the Q and lock features,
-// but have not time to implement this things
-// so, we will use the global variable
-// I Understand the Risks
-
-type GlobalFreeBSDState int
-
-const (
-	Absent GlobalFreeBSDState = iota
-	Creating
-	Created
-	Destroying
-)
-
-var CurentFreeBSDState GlobalFreeBSDState
 var sess = GetSharedConfigSession()
 var stackName = "freebsd-devch2021"
 
-func (d GlobalFreeBSDState) String() string {
-	return [...]string{"Absent", "Creating", "Created", "Destroying"}[d]
-}
-
-func tgCreateVM(b *telebot.Bot, m *telebot.Message) {
-
-	switch CurentFreeBSDState {
-	case Absent:
+func tgCreateVM(b *tb.Bot, m *tb.Message) {
+	if !ifStackCreated() {
 		b.Send(m.Chat, "Creating VM")
-		CurentFreeBSDState = Creating
 		createVM()
-	default:
-		id, err := GetVmID()
-		if err != nil {
-			println("getvmid err: " + err.Error())
-			return
-		}
-		if id != "" {
-			CurentFreeBSDState = Created
-			b.Send(m.Chat, "EC2 id: "+id+"\nCurent state: "+CurentFreeBSDState.String())
-			return
-		}
-		b.Send(m.Chat, "Please Wait. Curent state: "+CurentFreeBSDState.String())
-
+		return
 	}
+	b.Send(m.Chat, "VM stack is already exist")
+
+	id, err := GetVmID()
+	if err != nil {
+		println("getvmid err: " + err.Error())
+		return
+	}
+	if id != "" {
+		b.Send(m.Chat, "EC2 id: "+id)
+		return
+	}
+	b.Send(m.Chat, "Please Wait. Creating VM in progress")
 }
-func tgDestroyVM(b *telebot.Bot, m *telebot.Message) {
+func tgDestroyVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
 		b.Send(m.Chat, "VM stack is not exist")
+		return
 	}
 	scv := cloudformation.New(sess)
-	delOut, err := scv.DeleteStack(
+	_, err := scv.DeleteStack(
 		&cloudformation.DeleteStackInput{
 			StackName: aws.String(stackName)},
 	)
 	if err != nil {
-		b.Send(m.Chat, "Delete stack issues: "+err.Error())
+		b.Send(m.Chat, "CFN stack can not be deleted: "+err.Error())
 		return
 	}
-	b.Send(m.Chat, "Delete stack success: "+delOut.String())
+	b.Send(m.Chat, "Stack will be deleted soon")
 
 }
 
-func tgShowVerVM(b *telebot.Bot, m *telebot.Message) {
+func tgShowVerVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
 		b.Send(m.Chat, "VM stack is not exist")
+		return
 	}
 	cmd := []string{
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
@@ -90,12 +70,14 @@ func tgShowVerVM(b *telebot.Bot, m *telebot.Message) {
 
 }
 
-func tgKdePatchVM(b *telebot.Bot, m *telebot.Message) {
+func tgKdePatchVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
 		b.Send(m.Chat, "VM stack is not exist")
+		return
 	}
 	cmd := []string{
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
+		"pkg delete -y postgresql12-client",
 		"mkdir -p /usr/local/etc/pkg/repos",
 		"cp /etc/pkg/FreeBSD.conf /usr/local/etc/pkg/repos/",
 		"sed -I bak s/quarterly/latest/ /usr/local/etc/pkg/repos/FreeBSD.conf",
@@ -107,9 +89,10 @@ func tgKdePatchVM(b *telebot.Bot, m *telebot.Message) {
 
 	b.Send(m.Chat, fmt.Sprintf("%s\n\nPlease run %s again", ssmStdOut, TbCmdOnVmShowVer))
 }
-func tgMonitorVM(b *telebot.Bot, m *telebot.Message) {
+func tgMonitorVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
 		b.Send(m.Chat, "VM stack is not exist")
+		return
 	}
 	cmd := []string{
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
