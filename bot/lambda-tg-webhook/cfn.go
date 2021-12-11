@@ -24,7 +24,7 @@ func tgCreateVM(b *tb.Bot, m *tb.Message) {
 		b.Send(m.Chat, "EC2 id: "+id)
 		return
 	}
-	b.Send(m.Chat, "Please Wait. Creating VM in progress. Stack status: " + *curentStack.StackStatus)
+	b.Send(m.Chat, "Please Wait. Creating VM in progress. Stack status: "+*curentStack.StackStatus)
 }
 
 func tgDestroyVM(b *tb.Bot, m *tb.Message) {
@@ -41,7 +41,7 @@ func tgDestroyVM(b *tb.Bot, m *tb.Message) {
 		b.Send(m.Chat, "CFN stack can not be deleted: "+err.Error())
 		return
 	}
-	b.Send(m.Chat, "Stack will be deleted soon")
+	b.Send(m.Chat, "Stack will be deleted soon: "+*curentStack.StackStatus)
 
 }
 

@@ -30,8 +30,8 @@ Resources:
   AttachmentRoutingToIGW:
     Type: AWS::EC2::Route
     DependsOn:
-    - ResIGW
-    - ResRTIGW
+      - ResIGW
+      - ResRTIGW
     Properties:
       RouteTableId:
         Ref: ResRTIGW
@@ -120,6 +120,7 @@ Resources:
 #          su root -c "pkg install -y x11/kde5"
 #          su root -c 'echo amazon_ssm_agent_enable=YES >> /etc/rc.conf'
 #          su root -c 'service amazon-ssm-agent start'
+#          su root -c 'rm -rf  /etc/ssh/ssh_host_*'
 
 Outputs:
   InstanceId:

@@ -9,11 +9,34 @@ import (
 	"time"
 )
 
+func curentCmdInProgress(ssmSes *ssm.SSM, vmid string) bool {
+
+	cmdInvocation, err := ssmSes.ListCommands(&ssm.ListCommandsInput{
+		Filters: []*ssm.CommandFilter{
+			{Key: aws.String("DocumentName"), Value: aws.String("AWS-RunShellScript")},
+			{Key: aws.String("ExecutionStage"), Value: aws.String("Executing")},
+			//{Key: aws.String("Status"), Value: aws.String("InProgress")},
+		},
+		InstanceId: aws.String(vmid),
+	})
+	if err != nil {
+		return true
+	}
+
+	if len(cmdInvocation.Commands) > 0 {
+		return true
+	}
+
+	return false
+}
 func SSMRunCommand(shellCmds []string) string {
 	ssmSes := ssm.New(sess)
 	vmid, err := getVmID()
 	if err != nil {
 		return err.Error()
+	}
+	if curentCmdInProgress(ssmSes, vmid) {
+		return "Please try again latest. CmdId still in progress"
 	}
 
 	sendCmd, err := ssmSes.SendCommand(&ssm.SendCommandInput{
@@ -36,18 +59,20 @@ func SSMRunCommand(shellCmds []string) string {
 		switch {
 		case err != nil:
 			return fmt.Sprintf(
-				"GetCommandInvocation err:\nCommandId: %s; InstanceId: %s;\n\n%s",
+				"GetCommandInvocation err:\nCommandId: %s; InstanceId: %v;\n\n%s",
 				*sendCmd.Command.CommandId, vmid, err.Error())
 		case cmdInvocation != nil:
 			switch status := *cmdInvocation.Status; status {
 			case ssm.CommandInvocationStatusCancelling, ssm.CommandInvocationStatusInProgress, ssm.CommandInvocationStatusPending:
-				println("CommandInvocationStatus: " + status)
+				println("CommandInvocationStatus " + *sendCmd.Command.CommandId + " : " + status)
+				time.Sleep(500 * time.Millisecond)
 			default:
 				println("CommandInvocationStatus: " + status)
 				return fmt.Sprintf("Executed:\n```\n%v\n```\nResult:\n%s", strings.Join(shellCmds[:], "\n"), *cmdInvocation.StandardErrorContent+*cmdInvocation.StandardOutputContent)
 			}
 		default:
-			time.Sleep(300* time.Millisecond)
+			println("Command Invocation is nil")
+			time.Sleep(500 * time.Millisecond)
 		}
 
 	}
@@ -57,13 +82,14 @@ func SSMRunCommand(shellCmds []string) string {
 
 func tgShowVerVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
-		b.Send(m.Chat, "VM stack is not exist")
+		b.Reply(m, "VM stack is not exist")
 		return
 	}
 	cmd := []string{
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
 		"kf5-config --version 2>/dev/null",
 		"uname -a && date -u",
+		"pkg info -a | grep kde5",
 		"echo -n Private ip:",
 		"curl -s 169.254.169.254/latest/meta-data/local-ipv4",
 		"echo",
@@ -72,33 +98,33 @@ func tgShowVerVM(b *tb.Bot, m *tb.Message) {
 	}
 	ssmStdOut := SSMRunCommand(cmd)
 
-	b.Send(m.Chat, ssmStdOut)
+	b.Reply(m, ssmStdOut, &tb.SendOptions{DisableWebPagePreview: true})
 
 }
 
 func tgKdePatchVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
-		b.Send(m.Chat, "VM stack is not exist")
+		b.Reply(m, "VM stack is not exist")
 		return
 	}
 	cmd := []string{
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
-		"pkg delete -y postgresql12-client",
 		"mkdir -p /usr/local/etc/pkg/repos",
 		"cp /etc/pkg/FreeBSD.conf /usr/local/etc/pkg/repos/",
 		"sed -I bak s/quarterly/latest/ /usr/local/etc/pkg/repos/FreeBSD.conf",
 		"pkg update",
 		"pkg upgrade -y",
 		"echo patched",
+		"reboot",
 	}
 	ssmStdOut := SSMRunCommand(cmd)
 
-	b.Send(m.Chat, fmt.Sprintf("%s\n\nPlease run %s again", ssmStdOut, TbCmdOnVmShowVer))
+	b.Reply(m, fmt.Sprintf("%s\n\nPlease run %s again", ssmStdOut, TbCmdOnVmShowVer), &tb.SendOptions{DisableWebPagePreview: true})
 }
 
 func tgMonitorVM(b *tb.Bot, m *tb.Message) {
 	if !ifStackCreated() {
-		b.Send(m.Chat, "VM stack is not exist")
+		b.Reply(m, "VM stack is not exist")
 		return
 	}
 	cmd := []string{
@@ -106,5 +132,5 @@ func tgMonitorVM(b *tb.Bot, m *tb.Message) {
 		"top -b -z -w -n 10",
 	}
 	ssmStdOut := SSMRunCommand(cmd)
-	b.Send(m.Chat, ssmStdOut)
+	b.Reply(m, ssmStdOut, &tb.SendOptions{DisableWebPagePreview: true})
 }

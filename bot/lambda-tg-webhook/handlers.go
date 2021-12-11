@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -51,6 +52,13 @@ func getVmID() (instanceid string, err error) {
 	instanceid, ok := outputs["InstanceId"]
 	if ok {
 		return
+	}
+	if instanceid == "" {
+		stackStatus := "undefined"
+		if curentStack != nil {
+			stackStatus = *curentStack.StackStatus
+		}
+		return "", fmt.Errorf("Empty instance id, stack status: " + stackStatus)
 	}
 	return
 }
