@@ -8,6 +8,7 @@ import (
 
 var sess = getSharedConfigSession()
 var stackName = "freebsd-devch2021"
+var curentStack *cloudformation.Stack
 
 func getSharedConfigSession() *session.Session {
 	return session.Must(session.NewSessionWithOptions(session.Options{
@@ -29,6 +30,7 @@ func ifStackCreated() bool {
 		return false
 	}
 	if len(res.Stacks) == 1 {
+		curentStack = res.Stacks[0]
 		return true
 	}
 	return false

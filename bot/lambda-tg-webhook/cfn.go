@@ -24,7 +24,7 @@ func tgCreateVM(b *tb.Bot, m *tb.Message) {
 		b.Send(m.Chat, "EC2 id: "+id)
 		return
 	}
-	b.Send(m.Chat, "Please Wait. Creating VM in progress")
+	b.Send(m.Chat, "Please Wait. Creating VM in progress. Stack status: " + *curentStack.StackStatus)
 }
 
 func tgDestroyVM(b *tb.Bot, m *tb.Message) {

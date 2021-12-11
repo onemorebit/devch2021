@@ -4,7 +4,7 @@ Description: SAM Template for bot
 
 Globals:
   Function:
-    Timeout: 15
+    Timeout: 900
 
 Resources:
   DEVCH2021TGWebhookFunction:

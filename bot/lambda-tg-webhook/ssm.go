@@ -32,16 +32,26 @@ func SSMRunCommand(shellCmds []string) string {
 		CommandId:  sendCmd.Command.CommandId,
 		InstanceId: aws.String(vmid),
 	})
+	for {
+		switch {
+		case err != nil:
+			return fmt.Sprintf(
+				"GetCommandInvocation err:\nCommandId: %s; InstanceId: %s;\n\n%s",
+				*sendCmd.Command.CommandId, vmid, err.Error())
+		case cmdInvocation != nil:
+			switch status := *cmdInvocation.Status; status {
+			case ssm.CommandInvocationStatusCancelling, ssm.CommandInvocationStatusInProgress, ssm.CommandInvocationStatusPending:
+				println("CommandInvocationStatus: " + status)
+			default:
+				println("CommandInvocationStatus: " + status)
+				return fmt.Sprintf("Executed:\n```\n%v\n```\nResult:\n%s", strings.Join(shellCmds[:], "\n"), *cmdInvocation.StandardErrorContent+*cmdInvocation.StandardOutputContent)
+			}
+		default:
+			time.Sleep(300* time.Millisecond)
+		}
 
-	switch {
-	case err != nil:
-		return fmt.Sprintf(
-			"GetCommandInvocation err:\nCommandId: %s; InstanceId: %s;\n\n%s",
-			*sendCmd.Command.CommandId, vmid, err.Error())
-	case cmdInvocation != nil:
-		return fmt.Sprintf("Executed:\n```\n%v\n```\nResult:\n%s", strings.Join(shellCmds[:], "\n"), *cmdInvocation.StandardErrorContent+*cmdInvocation.StandardOutputContent)
 	}
-	return "unexpected behavior"
+	//return "unexpected behavior"
 
 }
 
