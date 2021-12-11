@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -52,6 +53,71 @@ func tgCreateVM(b *telebot.Bot, m *telebot.Message) {
 
 	}
 }
+func tgDestroyVM(b *telebot.Bot, m *telebot.Message) {
+	if !ifStackCreated() {
+		b.Send(m.Chat, "VM stack is not exist")
+	}
+	scv := cloudformation.New(sess)
+	delOut, err := scv.DeleteStack(
+		&cloudformation.DeleteStackInput{
+			StackName: aws.String(stackName)},
+	)
+	if err != nil {
+		b.Send(m.Chat, "Delete stack issues: "+err.Error())
+		return
+	}
+	b.Send(m.Chat, "Delete stack success: "+delOut.String())
+
+}
+
+func tgShowVerVM(b *telebot.Bot, m *telebot.Message) {
+	if !ifStackCreated() {
+		b.Send(m.Chat, "VM stack is not exist")
+	}
+	cmd := []string{
+		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
+		"kf5-config --version 2>/dev/null",
+		"uname -a && date -u",
+		"echo -n Private ip:",
+		"curl -s 169.254.169.254/latest/meta-data/local-ipv4",
+		"echo",
+		"echo -n Public ip:",
+		"curl -s 169.254.169.254/latest/meta-data/public-ipv4",
+	}
+	ssmStdOut := SSMRunCommand(cmd)
+
+	b.Send(m.Chat, ssmStdOut)
+
+}
+
+func tgKdePatchVM(b *telebot.Bot, m *telebot.Message) {
+	if !ifStackCreated() {
+		b.Send(m.Chat, "VM stack is not exist")
+	}
+	cmd := []string{
+		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
+		"mkdir -p /usr/local/etc/pkg/repos",
+		"cp /etc/pkg/FreeBSD.conf /usr/local/etc/pkg/repos/",
+		"sed -I bak s/quarterly/latest/ /usr/local/etc/pkg/repos/FreeBSD.conf",
+		"pkg update",
+		"pkg upgrade -y",
+		"echo patched",
+	}
+	ssmStdOut := SSMRunCommand(cmd)
+
+	b.Send(m.Chat, fmt.Sprintf("%s\n\nPlease run %s again", ssmStdOut, TbCmdOnVmShowVer))
+}
+func tgMonitorVM(b *telebot.Bot, m *telebot.Message) {
+	if !ifStackCreated() {
+		b.Send(m.Chat, "VM stack is not exist")
+	}
+	cmd := []string{
+		"PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
+		"top -b -z -w -n 10",
+	}
+	ssmStdOut := SSMRunCommand(cmd)
+	b.Send(m.Chat, ssmStdOut)
+}
 
 func GetSharedConfigSession() *session.Session {
 	return session.Must(session.NewSessionWithOptions(session.Options{
@@ -78,9 +144,29 @@ func createVM() {
 
 	println(awsutil.Prettify(resp))
 }
-func GetVmID() (instanceid string, err error) {
+
+func GetStacks() (*cloudformation.DescribeStacksOutput, error) {
 	scv := cloudformation.New(sess)
-	res, err := scv.DescribeStacks(&cloudformation.DescribeStacksInput{StackName: aws.String(stackName)})
+	return scv.DescribeStacks(&cloudformation.DescribeStacksInput{StackName: aws.String(stackName)})
+}
+
+func ifStackCreated() bool {
+	res, err := GetStacks()
+	if err != nil {
+		return false
+	}
+	if res == nil {
+		return false
+	}
+	if len(res.Stacks) == 1 {
+		return true
+	}
+	return false
+}
+
+func GetVmID() (instanceid string, err error) {
+
+	res, err := GetStacks()
 	if err != nil {
 		return
 	}
