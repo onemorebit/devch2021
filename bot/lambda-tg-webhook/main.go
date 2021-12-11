@@ -14,11 +14,23 @@ import (
 )
 
 var (
-	TelebotSecret = "" //os.Getenv("TELEBOT_SECRET")
-	DeployTGCmd   = "/deploy"
-	DefaultText   = fmt.Sprintf("Supported commands:\n%s - deploy app\n", DeployTGCmd)
-	DeployBranch  = "main"
-	DeployURL     = "" //os.Getenv("DEPLOY_URL")
+	TelebotSecret     = "" //os.Getenv("TELEBOT_SECRET")
+	TbCmdDeployApp    = "/deploy"
+	TbCmdOnVmCreate   = "/vm_create"
+	TbCmdOnVmShowVer  = "/vm_show_version"
+	TbCmdOnVmKdePatch = "/vm_kde_patch"
+	TbCmdOnVmCDestroy = "/vm_destroy"
+	TbCmdOnVmMonitor  = "/vm_monitor"
+	DefaultText       = "Supported commands:\n" +
+		TbCmdDeployApp + " deploy app\n" +
+		TbCmdOnVmCreate + " create freebsd with the old KDE version\n" +
+		TbCmdOnVmShowVer + " show FreeBsd and KDE versions\n" +
+		TbCmdOnVmKdePatch + " patch KDE\n" +
+		TbCmdOnVmCDestroy + " destroy the FreeBsd instance\n" +
+		TbCmdOnVmMonitor + " get instance stats\n"
+
+	DeployBranch = "main"
+	DeployURL    = "" //os.Getenv("DEPLOY_URL")
 )
 
 func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResponse, err error) {
@@ -46,7 +58,7 @@ func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResp
 	if err != nil {
 		return
 	}
-	b.Handle(DeployTGCmd, func(m *tb.Message) {
+	b.Handle(TbCmdDeployApp, func(m *tb.Message) {
 		var err error
 		b.Reply(m, "starting the deployment, msg id: "+strconv.Itoa(m.ID))
 		ghPayload := fmt.Sprintf("{%q: %q, %q: {%q: %q, %q: %q}}",
@@ -89,6 +101,11 @@ func handler(req events.APIGatewayProxyRequest) (resp events.APIGatewayProxyResp
 
 		}
 	})
+	b.Handle(TbCmdOnVmCreate, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmCreate+" is not implemented yet") })
+	b.Handle(TbCmdOnVmShowVer, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmShowVer+" is not implemented yet") })
+	b.Handle(TbCmdOnVmKdePatch, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmKdePatch+" is not implemented yet") })
+	b.Handle(TbCmdOnVmCDestroy, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmCDestroy+" is not implemented yet") })
+	b.Handle(TbCmdOnVmMonitor, func(m *tb.Message) { b.Send(m.Chat, TbCmdOnVmMonitor+" is not implemented yet") })
 	b.Handle(tb.OnText, func(m *tb.Message) { b.Send(m.Chat, DefaultText) })
 	b.Handle(tb.OnUserJoined, func(m *tb.Message) { b.Send(m.Chat, DefaultText) })
 	println("processing message: " + strconv.Itoa(u.Message.ID))
